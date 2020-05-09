@@ -16,8 +16,6 @@ from models.search_cnn import SearchCNNController
 config = SearchConfig()
 device = torch.device("cuda")
 
-config.data_path='/cache/test'
-
 # tensorboard
 writer = SummaryWriter(log_dir=os.path.join(config.path, "tb"))
 writer.add_text('config', config.as_markdown(), 0)
