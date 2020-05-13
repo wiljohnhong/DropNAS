@@ -122,16 +122,17 @@ class SearchCNNController(nn.Module):
         weights_normal, self.ratios_normal = self.generate_weights(self.alpha_normal, self.masks_normal)
         weights_reduce, self.ratios_reduce = self.generate_weights(self.alpha_reduce, self.masks_reduce)
 
-        if len(self.device_ids) == 1:
-            return self.net(x, weights_normal, weights_reduce, self.masks_normal, self.masks_reduce)
-
-        # scatter x
-        xs = nn.parallel.scatter(x, self.device_ids)
         # broadcast weights
         print(type(weights_normal))
         print(weights_normal)
         print(type(self.masks_normal))
         print(self.masks_normal)
+
+        if len(self.device_ids) == 1:
+            return self.net(x, weights_normal, weights_reduce, self.masks_normal, self.masks_reduce)
+
+        # scatter x
+        xs = nn.parallel.scatter(x, self.device_ids)
         wnormal_copies = broadcast_list(weights_normal, self.device_ids)
         wreduce_copies = broadcast_list(weights_reduce, self.device_ids)
         mnormal_copies = broadcast_list(self.masks_normal, self.device_ids)
