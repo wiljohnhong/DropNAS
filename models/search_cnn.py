@@ -201,8 +201,8 @@ class SearchCNNController(nn.Module):
             s1, _ = ws.shape
             drop_prob_para = (drop_rate) ** (1 / 4)
             drop_prob_nopara = (drop_rate) ** (1 / 4)
-            mask = [generate_mask(drop_prob_para, length=4) + generate_mask(drop_prob_nopara, length=4)
-                    for _ in range(s1)]  # mask for each node
+            mask = torch.Tensor([generate_mask(drop_prob_para, length=4) + generate_mask(drop_prob_nopara, length=4)
+                                 for _ in range(s1)])  # mask for each node
             masks.append(mask)
         
         return masks
