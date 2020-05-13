@@ -131,7 +131,7 @@ class SearchCNNController(nn.Module):
         print(type(weights_normal))
         print(weights_normal)
         print(type(self.masks_normal))
-        print(masks_normal)
+        print(self.masks_normal)
         wnormal_copies = broadcast_list(weights_normal, self.device_ids)
         wreduce_copies = broadcast_list(weights_reduce, self.device_ids)
         mnormal_copies = broadcast_list(self.masks_normal, self.device_ids)
