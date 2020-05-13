@@ -1,5 +1,7 @@
 """ CNN for architecture search """
 import math
+from typing import List, Any, Union
+
 import torch
 import random
 import logging
@@ -29,7 +31,6 @@ class SearchCNN(nn.Module):
             n_classes: # of classes
             n_layers: # of layers
             n_nodes: # of intermediate nodes in Cell
-            stem_multiplier
         """
         super().__init__()
         self.C_in = C_in
@@ -67,12 +68,17 @@ class SearchCNN(nn.Module):
         self.linear = nn.Linear(C_p, n_classes)
 
     def forward(self, x, weights_normal, weights_reduce, masks_normal, masks_reduce):
+        """
+        Args:
+            weights_xxx: probability contribution of each operation
+            masks_xxx: decide whether to drop an operation
+        """
         s0 = s1 = self.stem(x)
         
         for i, cell in enumerate(self.cells):
             weights = weights_reduce if cell.reduction else weights_normal
-            masks = masks_reduce if cell.reduction else masks_normal
-            s0, s1 = s1, cell(s0, s1, weights, masks)
+            masks = masks_reduce if cell.reduction else masks_normal    #######################################
+            s0, s1 = s1, cell(s0, s1, weights, masks)      ####################################################
 
         out = self.gap(s1)
         out = out.view(out.size(0), -1)  # flatten
@@ -82,7 +88,8 @@ class SearchCNN(nn.Module):
 
 class SearchCNNController(nn.Module):
     """ SearchCNN controller supporting multi-gpu """
-    def __init__(self, input_size, C_in, C, n_classes, n_layers, criterion, n_nodes=4, stem_multiplier=3, device_ids=None):
+    def __init__(self, input_size, C_in, C, n_classes, n_layers,
+                 criterion, n_nodes=4, stem_multiplier=3, device_ids=None):
         super().__init__()
         self.n_nodes = n_nodes
         self.criterion = criterion
@@ -121,6 +128,8 @@ class SearchCNNController(nn.Module):
         # scatter x
         xs = nn.parallel.scatter(x, self.device_ids)
         # broadcast weights
+        print(type(weights_normal))
+        print(type(self.masks_normal))
         wnormal_copies = broadcast_list(weights_normal, self.device_ids)
         wreduce_copies = broadcast_list(weights_reduce, self.device_ids)
         mnormal_copies = broadcast_list(self.masks_normal, self.device_ids)
@@ -179,17 +188,19 @@ class SearchCNNController(nn.Module):
     def generate_masks(self, weights, drop_rate):
         
         def generate_mask(drop_prob, length):
+            # generate a list of boolean as the mask for each group, and resample if all zero
             while True:
                 mask = [random.random() > drop_prob for _ in range(length)]
                 if sum(mask) > 0:
                     return mask
         
-        masks = []
+        masks = []  # List[List[List[bool]]]], mask for the whole cell
         for ws in weights:
             s1, _ = ws.shape
             drop_prob_para = (drop_rate) ** (1 / 4)
             drop_prob_nopara = (drop_rate) ** (1 / 4)
-            mask = [generate_mask(drop_prob_para, length=4) + generate_mask(drop_prob_nopara, length=4) for _ in range(s1)]
+            mask = [generate_mask(drop_prob_para, length=4) + generate_mask(drop_prob_nopara, length=4)
+                    for _ in range(s1)]  # mask for each node
             masks.append(mask)
         
         return masks
@@ -199,10 +210,12 @@ class SearchCNNController(nn.Module):
         ratios = []
         
         for alpha, mask in zip(alphas, masks):
+            # for each cell
             weight = torch.empty_like(alpha)
-            ratio = []
+            ratio = []  # ratio means the total probability of the kept operations on each edge
             
             for i in range(alpha.size(0)):
+                # for each edge
                 denominator = sum([torch.exp(a) for a, m in zip(alpha[i], mask[i]) if m])
                 weight[i] = torch.exp(alpha[i]) / denominator
                 ratio.append(denominator.item() / torch.sum(torch.exp(alpha[i])).item())
@@ -215,9 +228,10 @@ class SearchCNNController(nn.Module):
     def adjust_alphas(self):
 
         def adjust(alphas, masks, ratios):
-            for alpha, mask, ratio in zip(alphas, masks, ratios):
-                for i in range(alpha.size(0)):
-                    if sum(mask[i]) < len(gt.PRIMITIVES):
+            for alpha, mask, ratio in zip(alphas, masks, ratios):  # for each cell
+                for i in range(alpha.size(0)):  # for each edge
+                    if sum(mask[i]) < len(gt.PRIMITIVES):  # if there's any dropped operation
+                        # The following part works in the same way as introduced in the paper, but more redundant
                         updated_sum = sum([torch.exp(a) for a, m in zip(alpha[i], mask[i]) if m])
                         remain_sum = sum([torch.exp(a) for a, m in zip(alpha[i], mask[i]) if not m])
                         k = math.log(ratio[i] / (1 - ratio[i]) * remain_sum / updated_sum)
@@ -229,6 +243,7 @@ class SearchCNNController(nn.Module):
         adjust(self.alpha_reduce, self.masks_reduce, self.ratios_reduce)
 
     def weight_decay_loss(self, w_decay_rate):
+        # conduct partial-decay for weights
         loss = 0
         for w in self.weights():
             if w.grad is not None and not w.grad.view(-1)[0].item() == 0.:
@@ -237,6 +252,7 @@ class SearchCNNController(nn.Module):
         return loss * w_decay_rate
 
     def alpha_decay_loss(self, alpha_decay_rate):
+        # conduct partial-decay for alphas
         loss = 0
         for a in self.alphas():
             decay_idx = (a.grad.abs() > 1e-7).float()
@@ -244,5 +260,3 @@ class SearchCNNController(nn.Module):
             loss += torch.sum(torch.pow(decay_alpha, 2).view(-1))
         
         return loss * alpha_decay_rate
-
-
