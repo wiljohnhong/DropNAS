@@ -58,7 +58,7 @@ class SearchConfig(BaseConfig):
         parser.add_argument('--layers', type=int, default=14, help='# of layers')
         parser.add_argument('--seed', type=int, default=666, help='random seed')
         parser.add_argument('--workers', type=int, default=4, help='# of workers')
-        parser.add_argument('--drop_rate', type=float, default=3e-5, help='drop op rate when searching finishes')
+        parser.add_argument('--drop_rate', type=float, default=3e-5, help='drop path rate when searching finishes')
         parser.add_argument('--alpha_lr', type=float, default=3e-4, help='lr for alpha')
         parser.add_argument('--alpha_weight_decay', type=float, default=1e-3, help='weight decay for alpha')
 
