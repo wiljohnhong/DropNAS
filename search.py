@@ -7,7 +7,6 @@ import random
 import numpy as np
 import torch.nn as nn
 
-from visualize import plot
 from config import SearchConfig
 from tensorboardX import SummaryWriter
 from models.search_cnn import SearchCNNController
