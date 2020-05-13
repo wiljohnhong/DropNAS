@@ -53,7 +53,7 @@ def main():
     
     # dataloader, we use the whole training data to search
     n_train = len(train_data)
-    indices = list(range(n_train))
+    indices = list(range(n_train//10))
     train_sampler = torch.utils.data.sampler.SubsetRandomSampler(indices)
     train_loader = torch.utils.data.DataLoader(train_data,
                                                batch_size=config.batch_size,
