@@ -1,8 +1,8 @@
-## DropNAS: Grouped Operation Dropout for Differentiable Architecture Search
+# DropNAS: Grouped Operation Dropout for Differentiable Architecture Search
 
 DropNAS, a grouped operation dropout method for one-level DARTS, with better and more stable performance.
 
-### Requirements
+## Requirements
 
 - python-3.5.2
 - pytorch-1.0.0
@@ -10,7 +10,7 @@ DropNAS, a grouped operation dropout method for one-level DARTS, with better and
 - tensorboardX-2.0
 - graphviz-0.14
 
-### How to use the code
+## How to use the code
 
 - Search
 
@@ -35,7 +35,7 @@ python3 augment.py --name cifar10_example --dataset CIFAR10 --gpus 0 --genotype 
 )"
 ```
 
-### Results
+## Results
 
 The following results in CIFAR-10/100 are obtained with the default setting. More results with different arguements and other dataset like ImageNet can be found in the paper.
 
@@ -65,7 +65,7 @@ The test error of DropNAS on CIFAR-10 when different operation groups are applie
 
 
 
-### Found Architectures
+## Found Architectures
 
 <p align="center">
 <img src="img/normal_c10.png" alt="cifar10-normal" width=33% />
@@ -79,7 +79,7 @@ The test error of DropNAS on CIFAR-10 when different operation groups are applie
 <br/> CIFAR100 
 </p>
 
-### Reference
+## Reference
 
 [1] https://github.com/quark0/darts (official implementation of DARTS)
 
