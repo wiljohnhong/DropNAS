@@ -17,9 +17,9 @@ PRIMITIVES = [
     'sep_conv_5x5',
     'dil_conv_3x3',
     'dil_conv_5x5',
-    'max_pool_3x3',
-    'avg_pool_3x3',
-    'skip_connect',  # identity
+    'max_pool_3x3',  # deleted in `1-skip` search space, replaced by `skip-connect` in `3-skip` search space
+    'avg_pool_3x3',  # deleted in `1-skip` search space, replaced by `skip-connect` in `3-skip` search space
+    'skip_connect',
     'none',
 ]
 

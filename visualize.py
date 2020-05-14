@@ -21,7 +21,7 @@ def plot(genotype, file_path, caption=None):
         'fontname': 'times'
     }
     g = Digraph(
-        format='pdf',
+        format='png',
         edge_attr=edge_attr,
         node_attr=node_attr,
         engine='dot')
@@ -72,5 +72,3 @@ if __name__ == '__main__':
 
     plot(genotype.normal, "normal")
     plot(genotype.reduce, "reduction")
-
-
